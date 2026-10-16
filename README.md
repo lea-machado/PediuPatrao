@@ -19,25 +19,25 @@ A aplicação foi desenvolvida utilizando:
 | **ATENDENTE** | Cadastrar e editar clientes, registrar e acompanhar pedidos, solicitar descontos e cancelamentos, atribuir entregadores. |
 
 - Alteração do formato dos pedidos, adicionando itens, quantidade, preço, desconto, subtotal/total, responsável e data.
-- Acompanhamento dos pedidos por status `RECEBIDO → EM_PREPARACAO → PRONTO → SAIU_PARA_ENTREGA / RETIRADO → FINALIZADO`
+- Acompanhamento dos pedidos por status `RECEBIDO → EM_PREPARACAO → PRONTO → SAIU_PARA_ENTREGA / RETIRADO → FINALIZADO`.
 - Adição das funcionalidades e fluxo de cancelamento e aplicação de desconto (atendente solicita e gerente insere suas credenciais para aprovar)
-- Mudança do desconto para porcentagem, com limitação a 20%
+- Mudança do desconto para porcentagem, com limitação a 20%.
 - Auditoria de logs, sendo visível no front-end para gerentes e administradores.
-- Cadastro e atribuição de entregadores
-- Listagem de funcionários
+- Cadastro e atribuição de entregadores.
+- Listagem de funcionários.
 - Conexão do MongoDB alterada para variável de ambiente.
 - Testes unitários e de segurança.
 
 ## Como executar
 É necessário que o usuário possua instalados:
-- JDK 21
-- Maven
-- Conta e cluster no MongoDB Atlas
+- JDK 21.
+- Maven.
+- Conta e cluster no MongoDB Atlas.
 
 ### Configure o MongoDB Atlas
-1. Crie um cluster
-2. Cadastre um usuário para o banco de dados
-3. Clique em Connect, defina a linguagem para Java e Client Libray como SpringData MangoDB
+1. Crie um cluster.
+2. Cadastre um usuário para o banco de dados.
+3. Clique em Connect, defina a linguagem para Java e Client Libray como SpringData MangoDB.
 4. Copie a URI de conexão. Substitua `<db_password>` pela senha do usuário do banco (caso haja caracteres especiais na senha, eles devem ser codificados para uma URL).
 5. Abra um terminal na pasta raiz do projeto e configure o MangoDB com o seguinte comando:
 
@@ -81,10 +81,10 @@ mvn spring-boot:run
 ```
 
 ### Acesse a aplicação
-1. No navegador Web, acesse http://localhost:8080
-2. Entre com a conta de administrador que você criou nos passos anteriores
-3. Utilize a área **Usuários** para cadastrar contas com os perfis `gerente` e `atendente`
-4. Caso deseje trocar de perfil, encerre a sessão pelo botão **Sair**
+1. No navegador Web, acesse http://localhost:8080.
+2. Entre com a conta de administrador que você criou nos passos anteriores.
+3. Utilize a área **Usuários** para cadastrar contas com os perfis `gerente` e `atendente`.
+4. Caso deseje trocar de perfil, encerre a sessão pelo botão **Sair**.
 
 > **Observações:** o Maven deve ser executado na pasta que contém `pom.xml`.
 >
