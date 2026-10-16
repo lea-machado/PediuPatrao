@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<body>
+    <div th:fragment="content">
+        <h2>Funcionários</h2>
+        <p class="text-muted">Usuários cadastrados com perfil de gerente ou atendente.</p>
+        <div class="card">
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Usuário</th>
+                            <th>Perfil</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="funcionario : ${funcionarios}">
+                            <td th:text="${funcionario.username}"></td>
+                            <td th:text="${funcionario.role}"></td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(funcionarios)}">
+                            <td colspan="2">Nenhum funcionário cadastrado.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

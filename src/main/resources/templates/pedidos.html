@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+  <title>Lista de Pedidos</title>
+</head>
+
+<body>
+
+  <div th:fragment="content">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="fw-bold mb-0">
+        <i class="bi bi-bag me-2 text-primary"></i>Pedidos
+      </h2>
+    </div>
+
+    <!-- Mensagens de feedback -->
+    <div class="alert alert-success alert-dismissible fade show" th:if="${sucesso}" role="alert">
+      <i class="bi bi-check-circle-fill me-2"></i>
+      <span th:text="${sucesso}"></span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div class="alert alert-danger alert-dismissible fade show" th:if="${erro}" role="alert">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      <span th:text="${erro}"></span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div th:if="${podeCriarPedido}" class="card mb-3">
+      <div class="card-body">
+        <h5>Novo pedido</h5>
+        <form id="formNovoPedido" class="row g-2">
+          <div class="col-md-3">
+            <input id="pedidoBuscaCliente" class="form-control mb-1" type="search"
+              placeholder="Buscar cliente por nome ou telefone" autocomplete="off" aria-label="Buscar cliente">
+            <select id="pedidoClienteId" class="form-select" required aria-label="Cliente do pedido">
+              <option value="">Selecione um cliente</option>
+            </select>
+            <small id="pedidoMensagemCliente" class="text-muted"></small>
+          </div>
+          <div class="col-md-5"><select id="pedidoProdutoId" class="form-select" required>
+              <option value="">Selecione o produto</option>
+              <option th:each="produto : ${produtosPedido}" th:if="${produto.ativo != false}" th:value="${produto.id}"
+                th:text="${produto.nome + ' - R$ ' + produto.preco}"></option>
+            </select></div>
+          <div class="col-md-2"><input id="pedidoQuantidade" type="number" min="1" value="1" class="form-control"
+              required></div>
+          <div class="col-md-2"><button type="submit" class="btn btn-primary">Registrar</button></div>
+        </form>
+        <small class="text-muted">Preço e total são calculados pelo servidor. Um produto por vez neste formulário; a API
+          aceita vários itens.</small>
+      </div>
+    </div>
+    <!-- Tabela -->
+    <div class="card shadow-sm">
+      <div class="card-body p-0">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th class="ps-4">ID</th>
+              <th>Cliente ID</th>
+              <th>Itens</th>
+              <th>Total</th>
+              <th>Status</th>
+              <th>Entregador</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Lista vazia -->
+            <tr th:if="${#lists.isEmpty(pedidos)}">
+              <td colspan="7" class="text-center text-muted py-5">
+                <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                Nenhum pedido encontrado.
+              </td>
+            </tr>
+            <!-- Linhas -->
+            <tr th:each="pedido : ${pedidos}">
+              <td class="ps-4 text-muted" th:text="${pedido.id}"></td>
+              <td th:text="${pedido.clienteId}"></td>
+              <td><span th:if="${pedido.itens == null or #lists.isEmpty(pedido.itens)}"
+                  th:text="${pedido.sabor}"></span>
+                <span th:each="item : ${pedido.itens}"
+                  th:text="${item.quantidade + 'x ' + item.nome + ' (' + item.precoUnitario + ') '}"></span>
+              </td>
+              <td th:text="${pedido.valorTotal}"></td>
+              <td>
+                <span class="badge"
+                  th:classappend="${pedido.status == 'FINALIZADO'} ? 'bg-success' :
+                                                  (${pedido.status == 'CANCELADO'} ? 'bg-danger' :
+                                                  (${pedido.status == 'EM_PREPARACAO' or pedido.status == 'CANCELAMENTO_SOLICITADO'} ? 'bg-warning text-dark' : 'bg-secondary'))"
+                  th:text="${pedido.status}">
+                </span>
+              </td>
+              <td>
+                <span th:each="ent : ${entregadoresPedido}" th:if="${ent.id == pedido.entregadorId}"
+                  th:text="${ent.nome}"></span>
+                <span th:if="${pedido.entregadorId == null}" class="text-muted">Não atribuído</span>
+              </td>
+              <td>
+                <button
+                  th:if="${podeAtribuirEntregador and (pedido.status == 'RECEBIDO' or pedido.status == 'EM_PREPARACAO' or pedido.status == 'PRONTO')}"
+                  class="btn btn-sm btn-outline-info" type="button" th:attr="data-id=${pedido.id}"
+                  onclick="atribuirEntregador(this.dataset.id)">Atribuir entregador</button>
+                <button
+                  th:if="${podeSolicitarCancelamento and (pedido.status == 'RECEBIDO' or pedido.status == 'EM_PREPARACAO' or pedido.status == 'PRONTO')}"
+                  type="button" class="btn btn-sm btn-outline-danger" th:attr="data-id=${pedido.id}"
+                  onclick="solicitarCancelamento(this.dataset.id)">Solicitar cancelamento</button>
+                <button th:if="${podeAprovarCancelamento and pedido.status == 'CANCELAMENTO_SOLICITADO'}" type="button"
+                  class="btn btn-sm btn-danger" th:attr="data-id=${pedido.id}"
+                  onclick="abrirAprovacao(this.dataset.id)">Aprovar com senha do gerente</button>
+                <button
+                  th:if="${podeAtualizarPedido and (pedido.status == 'RECEBIDO' or pedido.status == 'EM_PREPARACAO' or pedido.status == 'PRONTO' or pedido.status == 'SAIU_PARA_ENTREGA' or pedido.status == 'RETIRADO')}"
+                  class="btn btn-sm btn-outline-primary" type="button"
+                  th:attr="data-id=${pedido.id},data-status=${pedido.status}"
+                  onclick="avancarPedido(this.dataset.id,this.dataset.status)">Avançar</button>
+                <button th:if="${podeSolicitarCancelamento and pedido.descontoSolicitado == null and (pedido.status == 'RECEBIDO' or pedido.status == 'EM_PREPARACAO' or pedido.status == 'PRONTO')}"
+                  class="btn btn-sm btn-outline-secondary" type="button" th:attr="data-id=${pedido.id}"
+                  onclick="solicitarDesconto(this.dataset.id)">Solicitar desconto</button>
+                <button th:if="${podeAprovarCancelamento and pedido.descontoSolicitado != null and (pedido.status == 'RECEBIDO' or pedido.status == 'EM_PREPARACAO' or pedido.status == 'PRONTO')}"
+                  class="btn btn-sm btn-success" type="button" th:attr="data-id=${pedido.id}"
+                  onclick="abrirAprovacaoDesconto(this.dataset.id)">Aprovar desconto</button>
+                <span th:if="${pedido.descontoSolicitado != null}" class="badge bg-warning text-dark"
+                  th:text="${'Desconto pendente: ' + pedido.descontoSolicitado + '%'}"></span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card-footer text-muted small" th:if="${!#lists.isEmpty(pedidos)}">
+        Total: <strong th:text="${#lists.size(pedidos)}"></strong> pedido(s)
+      </div>
+    </div>
+
+    <div class="modal fade" id="modalAprovarCancelamento" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Aprovar cancelamento</h5>
+            <button class="btn-close" type="button" data-bs-dismiss="modal"></button>
+          </div>
+          <form id="formAprovarCancelamento" autocomplete="off">
+            <div class="modal-body">
+              <p>Informe as credenciais de um GERENTE para aprovar o cancelamento.</p>
+              <label class="form-label" for="gerenteUsername">Usuário do gerente</label>
+              <input class="form-control mb-3" id="gerenteUsername" required autocomplete="off">
+              <label class="form-label" for="gerentePassword">Senha do gerente</label>
+              <input class="form-control" id="gerentePassword" type="password" required autocomplete="off">
+              <p id="erroAprovacao" class="text-danger mt-2" role="alert"></p>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" type="button"
+                data-bs-dismiss="modal">Voltar</button>
+              <button class="btn btn-danger" type="submit">Confirmar cancelamento</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="modalAprovarDesconto" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Autorizar desconto</h5>
+          <button class="btn-close" type="button" data-bs-dismiss="modal"></button></div>
+        <form id="formAprovarDesconto" autocomplete="off">
+          <div class="modal-body">
+            <p>O gerente deve informar suas credenciais para aprovar este desconto.</p>
+            <label class="form-label" for="descontoGerenteUsername">Usuário do gerente</label>
+            <input class="form-control mb-3" id="descontoGerenteUsername" required autocomplete="off">
+            <label class="form-label" for="descontoGerentePassword">Senha do gerente</label>
+            <input class="form-control" id="descontoGerentePassword" type="password" required autocomplete="off">
+            <p id="erroDesconto" class="text-danger mt-2" role="alert"></p>
+          </div>
+          <div class="modal-footer"><button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Voltar</button>
+            <button class="btn btn-success" type="submit">Confirmar desconto</button></div>
+        </form>
+      </div></div>
+    </div>
+
+    <script th:inline="javascript">
+      const csrfPedidoToken = document.querySelector('meta[name="_csrf"]').content;
+      const csrfPedidoHeader = document.querySelector('meta[name="_csrf_header"]').content;
+      const buscaClientePedido = document.getElementById('pedidoBuscaCliente');
+      const selecaoClientePedido = document.getElementById('pedidoClienteId');
+      const mensagemClientePedido = document.getElementById('pedidoMensagemCliente');
+      let clientesDisponiveis = [];
+
+      function exibirClientesPedido() {
+        if (!selecaoClientePedido) return;
+        const idSelecionado = selecaoClientePedido.value;
+        const filtro = (buscaClientePedido.value || '').trim().toLocaleLowerCase('pt-BR');
+        const encontrados = clientesDisponiveis.filter(cliente =>
+          (cliente.nome || '').toLocaleLowerCase('pt-BR').includes(filtro) ||
+          (cliente.telefone || '').toLowerCase().includes(filtro)
+        );
+
+        selecaoClientePedido.replaceChildren(new Option('Selecione um cliente', ''));
+        encontrados.forEach(cliente => {
+          const texto = `${cliente.nome || 'Sem nome'} - ${cliente.telefone || 'Sem telefone'}`;
+          selecaoClientePedido.add(new Option(texto, cliente.id));
+        });
+        if (encontrados.some(cliente => cliente.id === idSelecionado)) {
+          selecaoClientePedido.value = idSelecionado;
+        }
+        mensagemClientePedido.textContent = encontrados.length
+          ? `${encontrados.length} cliente(s) encontrado(s).`
+          : 'Nenhum cliente encontrado.';
+      }
+
+      async function carregarClientesPedido() {
+        if (!selecaoClientePedido) return;
+        try {
+          const resposta = await fetch('/api/clientes');
+          if (!resposta.ok) throw new Error('Não foi possível consultar os clientes.');
+          clientesDisponiveis = await resposta.json();
+          exibirClientesPedido();
+        } catch (erro) {
+          mensagemClientePedido.textContent = erro.message;
+          selecaoClientePedido.disabled = true;
+        }
+      }
+      if (buscaClientePedido) {
+        buscaClientePedido.addEventListener('input', exibirClientesPedido);
+        carregarClientesPedido();
+      }
+
+      const formNovoPedido = document.getElementById('formNovoPedido');
+      if (formNovoPedido) formNovoPedido.addEventListener('submit', async e => {
+        e.preventDefault();
+        if (!selecaoClientePedido.value) {
+          alert('Selecione um cliente cadastrado antes de registrar o pedido.');
+          return;
+        }
+        try {
+          const r = await fetch('/api/pedidos', {
+            method: 'POST', headers: {'Content-Type': 'application/json', [csrfPedidoHeader]: csrfPedidoToken},
+            body: JSON.stringify({
+              clienteId: document.getElementById('pedidoClienteId').value,
+              itens: [{produtoId: document.getElementById('pedidoProdutoId').value, quantidade: Number(document.getElementById('pedidoQuantidade').value)}]
+            })
+          });
+          if (!r.ok) throw new Error((await r.json().catch(() => ({}))).erro || 'Falha ao registrar pedido.');
+          location.reload();
+        } catch (err) {alert(err.message);}
+      });
+      async function atribuirEntregador(id) {
+        const opcoes = /*[[${entregadoresPedido}]]*/[];
+        if (!opcoes.length) return alert('Não há entregadores cadastrados. Solicite ao ADMIN.');
+        const nomes = opcoes.map((ent, i) => (i + 1) + ' - ' + ent.nome).join('\n');
+        const escolha = prompt('Escolha o número do entregador:\n' + nomes);
+        if (escolha === null) return;
+        const indice = Number(escolha) - 1;
+        if (!Number.isInteger(indice) || indice < 0 || indice >= opcoes.length) {
+          return alert('Selecione um número válido.');
+        }
+        try {
+          const resposta = await fetch('/api/pedidos/' + encodeURIComponent(id) + '/entregador', {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json', [csrfPedidoHeader]: csrfPedidoToken},
+            body: JSON.stringify({entregadorId: opcoes[indice].id})
+          });
+          if (!resposta.ok) {
+            const erro = await resposta.json().catch(() => ({}));
+            throw new Error(erro.erro || 'Não foi possível atribuir o entregador.');
+          }
+          location.reload();
+        } catch (erro) {alert(erro.message);}
+      }
+      async function avancarPedido(id, atual) {
+        let proximo = ({RECEBIDO: 'EM_PREPARACAO', EM_PREPARACAO: 'PRONTO', SAIU_PARA_ENTREGA: 'FINALIZADO', RETIRADO: 'FINALIZADO'})[atual];
+        if (atual === 'PRONTO') {
+          proximo = prompt('Digite SAIU_PARA_ENTREGA ou RETIRADO:');
+          if (!['SAIU_PARA_ENTREGA', 'RETIRADO'].includes(proximo)) return;
+        }
+        if (!proximo || !confirm('Alterar status para ' + proximo + '?')) return;
+        try {
+          const r = await fetch('/api/pedidos/' + encodeURIComponent(id) + '/status?status=' + encodeURIComponent(proximo),
+            {method: 'PUT', headers: {[csrfPedidoHeader]: csrfPedidoToken}});
+          if (!r.ok) throw new Error((await r.json().catch(() => ({}))).erro || 'Transição não permitida.');
+          location.reload();
+        } catch (err) {alert(err.message);}
+      }
+      async function solicitarDesconto(id) {
+        const valor = prompt('Qual percentual de desconto deseja solicitar? (0,01 a 20)');
+        if (valor === null) return;
+        const percentual = valor.trim().replace(',', '.');
+        if (!/^\d+(\.\d{1,2})?$/.test(percentual) || Number(percentual) <= 0 || Number(percentual) > 20)
+          return alert('Informe um percentual maior que 0 e de até 20.');
+        try {
+          const r = await fetch('/api/pedidos/' + encodeURIComponent(id) + '/solicitar-desconto', {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json', [csrfPedidoHeader]: csrfPedidoToken},
+            body: JSON.stringify({desconto: Number(percentual)})
+          });
+          if (!r.ok) throw new Error((await r.json().catch(() => ({}))).erro || 'Não foi possível solicitar desconto.');
+          location.reload();
+        } catch (erro) { alert(erro.message); }
+      }
+
+      let pedidoAprovarDescontoId = null;
+      function abrirAprovacaoDesconto(id) {
+        pedidoAprovarDescontoId = id;
+        document.getElementById('formAprovarDesconto').reset();
+        document.getElementById('erroDesconto').textContent = '';
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalAprovarDesconto')).show();
+      }
+      document.getElementById('formAprovarDesconto').addEventListener('submit', async function (event) {
+        event.preventDefault();
+        const senha = document.getElementById('descontoGerentePassword');
+        try {
+          const r = await fetch('/api/pedidos/' + encodeURIComponent(pedidoAprovarDescontoId) + '/aprovar-desconto', {
+            method: 'POST', headers: {'Content-Type': 'application/json', [csrfPedidoHeader]: csrfPedidoToken},
+            body: JSON.stringify({username: document.getElementById('descontoGerenteUsername').value, password: senha.value})
+          });
+          senha.value = '';
+          if (!r.ok) throw new Error((await r.json().catch(() => ({}))).erro || 'Não foi possível aprovar desconto.');
+          location.reload();
+        } catch (erro) { senha.value = ''; document.getElementById('erroDesconto').textContent = erro.message; }
+      });
+      let pedidoAprovarId = null;
+      async function solicitarCancelamento(id) {
+        if (!confirm('Deseja solicitar o cancelamento deste pedido?')) return;
+        const justificativa = prompt('Informe a justificativa do cancelamento:');
+        if (!justificativa || !justificativa.trim()) return alert('A justificativa é obrigatória.');
+        try {
+          const resposta = await fetch('/api/pedidos/' + encodeURIComponent(id) + '/solicitar-cancelamento',
+            {method: 'PUT', headers: {'Content-Type': 'application/json', [csrfPedidoHeader]: csrfPedidoToken}, body: JSON.stringify({justificativa})});
+          if (!resposta.ok) {const erro = await resposta.json().catch(() => ({})); throw new Error(erro.erro || 'Não foi possível solicitar o cancelamento.');}
+          location.reload();
+        } catch (e) {alert(e.message);}
+      }
+      function abrirAprovacao(id) {
+        pedidoAprovarId = id;
+        document.getElementById('formAprovarCancelamento').reset();
+        document.getElementById('erroAprovacao').textContent = '';
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalAprovarCancelamento')).show();
+      }
+      document.getElementById('formAprovarCancelamento').addEventListener('submit', async function (event) {
+        event.preventDefault();
+        const senha = document.getElementById('gerentePassword');
+        try {
+          const resposta = await fetch('/api/pedidos/' + encodeURIComponent(pedidoAprovarId) + '/aprovar-cancelamento', {
+            method: 'POST', headers: {'Content-Type': 'application/json', [csrfPedidoHeader]: csrfPedidoToken},
+            body: JSON.stringify({username: document.getElementById('gerenteUsername').value, password: senha.value})
+          });
+          senha.value = '';
+          if (!resposta.ok) {const erro = await resposta.json().catch(() => ({})); throw new Error(erro.erro || 'Não foi possível aprovar o cancelamento.');}
+          location.reload();
+        } catch (e) {senha.value = ''; document.getElementById('erroAprovacao').textContent = e.message;}
+      });
+    </script>
+  </div>
+
+</body>
+
+</html>

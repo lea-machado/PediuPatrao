@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <div th:fragment="content">
+        <h2>Auditoria</h2>
+        <p class="text-muted">Histórico de alterações em pedidos e clientes. Consulta exclusiva para administradores e gerentes.</p>
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Data/hora</th>
+                                <th>Usuário</th>
+                                <th>Perfil</th>
+                                <th>Operação</th>
+                                <th>Entidade</th>
+                                <th>ID da entidade</th>
+                                <th>Antes</th>
+                                <th>Depois</th>
+                                <th>Justificativa</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="registro : ${registrosAuditoria}">
+                                <td class="text-nowrap" th:text="${registro.dataHora != null ? #temporals.format(registro.dataHora, 'dd/MM/yyyy HH:mm:ss') : '-'}">-</td>
+                                <td th:text="${registro.usuario}">-</td>
+                                <td th:text="${registro.perfil}">-</td>
+                                <td th:text="${registro.operacao}">-</td>
+                                <td th:text="${registro.entidade}">-</td>
+                                <td class="text-break" th:text="${registro.entidadeId}">-</td>
+                                <td><pre class="mb-0 small" style="white-space:pre-wrap;word-break:break-word" th:text="${registro.anterior}">-</pre></td>
+                                <td><pre class="mb-0 small" style="white-space:pre-wrap;word-break:break-word" th:text="${registro.novo}">-</pre></td>
+                                <td th:text="${registro.justificativa != null && !registro.justificativa.isBlank() ? registro.justificativa : '-'}">-</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(registrosAuditoria)}">
+                                <td colspan="9" class="text-center text-muted">Nenhum registro de auditoria encontrado.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
