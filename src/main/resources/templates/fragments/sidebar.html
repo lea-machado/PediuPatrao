@@ -10,69 +10,104 @@
     <div th:fragment="sidebar">
         <div id="sidebar">
             <h4 class="text-center py-3">Pediu Patrão</h4>
+
             <ul class="nav flex-column">
+
                 <li class="nav-item">
                     <a class="nav-link" th:href="@{/}" aria-current="page">
-                        <i class="bi bi-house"></i><span class="d-none d-md-inline">&nbsp;Home</span>
+                        <i class="bi bi-house"></i>
+                        <span class="d-none d-md-inline">&nbsp;Home</span>
                     </a>
                 </li>
+
                 <li class="nav-item">
                     <a class="nav-link" th:href="@{/clientes}">
-                        <i class="bi bi-person-raised-hand"></i><span class="d-none d-md-inline">&nbsp;Clientes</span>
+                        <i class="bi bi-person-raised-hand"></i>
+                        <span class="d-none d-md-inline">&nbsp;Clientes</span>
                     </a>
                 </li>
+
                 <li class="nav-item">
                     <a class="nav-link" th:href="@{/pedidos}">
-                        <i class="bi bi-bag"></i><span class="d-none d-md-inline">&nbsp;Pedidos</span>
+                        <i class="bi bi-bag"></i>
+                        <span class="d-none d-md-inline">&nbsp;Pedidos</span>
                     </a>
                 </li>
+
+                <li class="nav-item" th:if="${podeVerAuditoria}">
+                    <a class="nav-link" th:href="@{/admin}">
+                        <i class="bi bi-bar-chart-line"></i>
+                        <span class="d-none d-md-inline">&nbsp;Dashboard</span>
+                    </a>
+                </li>
+
                 <li class="nav-item" th:if="${podeVerAuditoria}">
                     <a class="nav-link" th:href="@{/auditoria}">
-                        <i class="bi bi-clock-history"></i><span class="d-none d-md-inline">&nbsp;Auditoria</span>
+                        <i class="bi bi-clock-history"></i>
+                        <span class="d-none d-md-inline">&nbsp;Auditoria</span>
                     </a>
                 </li>
+
                 <li class="nav-item">
                     <a class="nav-link" href="#" onclick="toggleSubmenu(event, this)">
-                        <i class="bi bi-gear"></i><span class="d-none d-md-inline">&nbsp;Configurações</span>
-                        <span class="float-end">&#9662;</span> <!-- Setinha -->
+                        <i class="bi bi-gear"></i>
+                        <span class="d-none d-md-inline">&nbsp;Configurações</span>
+                        <span class="float-end">&#9662;</span>
                     </a>
+
                     <ul class="nav flex-column submenu">
+
                         <li class="nav-item">
                             <a class="nav-link" th:href="@{/funcionarios}">
-                                <i class="bi bi-person-walking"></i>&nbsp;Funcionários
+                                <i class="bi bi-person-walking"></i>
+                                &nbsp;Funcionários
                             </a>
                         </li>
+
                         <li class="nav-item">
                             <a class="nav-link" th:href="@{/entregadores}">
-                                <i class="bi bi-bicycle"></i>&nbsp;Entregadores
+                                <i class="bi bi-bicycle"></i>
+                                &nbsp;Entregadores
                             </a>
                         </li>
+
                         <li class="nav-item" th:if="${podeGerenciarProdutos}">
                             <a class="nav-link" th:href="@{/produtos}">
-                                <i class="bi bi-boxes"></i><span class="d-none d-md-inline">&nbsp;Produtos</span>
+                                <i class="bi bi-boxes"></i>
+                                <span class="d-none d-md-inline">&nbsp;Produtos</span>
                             </a>
                         </li>
+
                         <li class="nav-item" th:if="${podeGerenciarUsuarios}">
                             <a class="nav-link" th:href="@{/usuarios}">
-                                <i class="bi bi-people-fill"></i><span class="d-none d-md-inline">&nbsp;Usuários</span>
+                                <i class="bi bi-people-fill"></i>
+                                <span class="d-none d-md-inline">&nbsp;Usuários</span>
                             </a>
                         </li>
+
                     </ul>
                 </li>
+
             </ul>
+
             <ul class="nav flex-column">
                 <li class="nav-item">
                     <form th:action="@{/logout}" method="post" class="m-0">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                        <button type="submit" class="nav-link w-100 text-start"
-                            style="background: transparent; border: 0; font: inherit; cursor: pointer;">
-                            <i class="bi bi-box-arrow-right"></i><span class="d-none d-md-inline">&nbsp;Sair</span>
+                        <input type="hidden"
+                               th:name="${_csrf.parameterName}"
+                               th:value="${_csrf.token}" />
+
+                        <button type="submit"
+                                class="nav-link w-100 text-start"
+                                style="background: transparent; border: 0; font: inherit; cursor: pointer;">
+                            <i class="bi bi-box-arrow-right"></i>
+                            <span class="d-none d-md-inline">&nbsp;Sair</span>
                         </button>
                     </form>
                 </li>
             </ul>
+
         </div>
     </div>
 </body>
-
 </html>

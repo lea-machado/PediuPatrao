@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard | Pediu Patrão</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+<style>
+.small-box,.card{border-radius:12px}.card{box-shadow:0 4px 15px #0001}.chart-wrap{height:280px}.table td{vertical-align:middle}.brand-link{font-weight:700}
+</style>
+</head>
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
+<nav class="main-header navbar navbar-expand navbar-white navbar-light"><ul class="navbar-nav"><li class="nav-item"><a class="nav-link" data-widget="pushmenu" href="#"><i class="fas fa-bars"></i></a></li></ul><span class="navbar-text">Painel administrativo</span><ul class="navbar-nav ml-auto"><li class="nav-item"><a class="nav-link" href="/">Voltar ao sistema</a></li><li class="nav-item"><form th:action="@{/logout}" method="post"><button type="submit" class="btn btn-link nav-link">Sair</button></form></li></ul></nav>
+<aside class="main-sidebar sidebar-dark-primary elevation-4"><a href="/admin" class="brand-link text-center"><i class="fas fa-pizza-slice text-warning mr-2"></i>Pediu Patrão</a><div class="sidebar"><nav class="mt-3"><ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview"><li class="nav-item"><a href="/admin" class="nav-link active"><i class="nav-icon fas fa-chart-line"></i><p>Dashboard</p></a></li><li class="nav-item"><a href="/pedidos" class="nav-link"><i class="nav-icon fas fa-receipt"></i><p>Pedidos</p></a></li><li class="nav-item"><a href="/" class="nav-link"><i class="nav-icon fas fa-home"></i><p>Início</p></a></li></ul></nav></div></aside>
+<div class="content-wrapper"><section class="content-header"><div class="container-fluid"><div class="d-flex justify-content-between flex-wrap align-items-center"><div><h1 class="font-weight-bold">Visão geral das vendas</h1><p class="text-muted">Indicadores e tendências do estabelecimento</p></div><span class="text-muted" id="atualizado">Carregando...</span></div></div></section>
+<section class="content"><div class="container-fluid">
+<div class="card card-outline card-warning"><div class="card-body"><form id="filtros" class="row align-items-end"><div class="form-group col-md-2"><label for="periodo">Período</label><select class="form-control" id="periodo"><option value="hoje">Hoje</option><option value="semana">Esta semana</option><option value="mes">Este mês</option><option value="personalizado">Personalizado</option></select></div><div class="form-group col-md-2"><label for="inicio">Data inicial</label><input class="form-control" id="inicio" type="date"></div><div class="form-group col-md-2"><label for="fim">Data final</label><input class="form-control" id="fim" type="date"></div><div class="form-group col-md-2"><label for="status">Situação</label><select class="form-control" id="status"><option value="">Todas</option><option>RECEBIDO</option><option>EM_PREPARO</option><option>PRONTO</option><option>SAIU_PARA_ENTREGA</option><option>RETIRADO</option><option>FINALIZADO</option><option>CANCELAMENTO_SOLICITADO</option><option>CANCELADO</option></select></div><div class="form-group col-md-2"><label for="agrupamento">Vendas por</label><select class="form-control" id="agrupamento"><option value="dia">Dia</option><option value="semana">Semana</option><option value="mes">Mês</option></select></div><div class="form-group col-md-2"><button class="btn btn-warning btn-block" type="submit">Aplicar filtros</button></div></form><div class="d-flex justify-content-between"><small class="text-muted">Faturamento estimado: desconsidera pedidos cancelados ou com cancelamento solicitado.</small><button class="btn btn-sm btn-outline-secondary" type="button" id="limpar">Limpar</button></div></div></div>
+<div id="erro" class="alert alert-danger" style="display:none" role="alert"></div>
+<div class="row"><div class="col-lg-3 col-sm-6"><div class="small-box bg-info"><div class="inner"><h3 id="totalPedidos">—</h3><p>Pedidos no período</p></div><div class="icon"><i class="fas fa-shopping-bag"></i></div></div></div><div class="col-lg-3 col-sm-6"><div class="small-box bg-success"><div class="inner"><h3 id="faturamento" style="font-size:1.8rem">—</h3><p>Faturamento estimado</p></div><div class="icon"><i class="fas fa-dollar-sign"></i></div></div></div><div class="col-lg-3 col-sm-6"><div class="small-box bg-warning"><div class="inner"><h3 id="ticketMedio" style="font-size:1.8rem">—</h3><p>Ticket médio</p></div><div class="icon"><i class="fas fa-chart-bar"></i></div></div></div><div class="col-lg-3 col-sm-6"><div class="small-box bg-danger"><div class="inner"><h3 id="cancelados">—</h3><p>Cancelados</p></div><div class="icon"><i class="fas fa-ban"></i></div></div></div></div>
+<div class="row"><div class="col-lg-8"><div class="card"><div class="card-header"><h3 class="card-title font-weight-bold">Análise de vendas por período</h3></div><div class="card-body"><div class="chart-wrap"><canvas id="vendas"></canvas></div></div></div></div><div class="col-lg-4"><div class="card"><div class="card-header"><h3 class="card-title font-weight-bold">Situação dos pedidos</h3></div><div class="card-body"><div class="chart-wrap"><canvas id="situacoes"></canvas></div></div></div></div></div>
+<div class="row"><div class="col-lg-6"><div class="card"><div class="card-header"><h3 class="card-title font-weight-bold">Produtos mais pedidos no período</h3></div><div class="card-body"><div class="chart-wrap"><canvas id="graficoProdutos"></canvas></div><p id="semProdutos" class="text-muted text-center mb-0" style="display:none">Nenhum produto no período selecionado.</p></div></div></div><div class="col-lg-6"><div class="card"><div class="card-header"><h3 class="card-title font-weight-bold">Últimos pedidos do período</h3></div><div class="card-body table-responsive p-0"><table class="table table-hover"><thead><tr><th>Pedido</th><th>Data</th><th>Situação</th><th class="text-right">Valor</th></tr></thead><tbody id="pedidos"></tbody></table></div></div></div></div>
+</div></section></div><footer class="main-footer">Pediu Patrão · Dashboard administrativo</footer></div>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script><script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script><script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+const dinheiro = v => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v||0);
+const numero = v => new Intl.NumberFormat('pt-BR').format(v||0);
+const escapar = v => String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nomes = {RECEBIDO:'Recebido',EM_PREPARO:'Em preparo',PRONTO:'Pronto',SAIU_PARA_ENTREGA:'Saiu para entrega',RETIRADO:'Retirado',FINALIZADO:'Finalizado',CANCELAMENTO_SOLICITADO:'Cancelamento solicitado',CANCELADO:'Cancelado'};
+let graficoVendas,graficoSituacoes,graficoProdutos,controle;
+function preencher(id,linhas,colunas){document.getElementById(id).innerHTML=linhas.length?linhas.join(''):`<tr><td colspan="${colunas}" class="text-center text-muted py-4">Nenhum registro encontrado</td></tr>`;}
+async function carregar(){
+ if(controle)controle.abort();controle=new AbortController();
+ const params=new URLSearchParams();['inicio','fim','status','agrupamento'].forEach(id=>{const valor=document.getElementById(id).value;if(valor)params.set(id,valor);});
+ const erro=document.getElementById('erro');erro.style.display='none';
+ try{
+  const resposta=await fetch('/api/dashboard?'+params,{signal:controle.signal,headers:{Accept:'application/json'}});
+  if(!resposta.ok){const corpo=await resposta.json().catch(()=>({}));throw new Error(corpo.erro||'Não foi possível consultar o dashboard.');}
+  const dados=await resposta.json();
+  ['totalPedidos','cancelados'].forEach(id=>document.getElementById(id).textContent=numero(dados[id]));
+  ['faturamento','ticketMedio'].forEach(id=>document.getElementById(id).textContent=dinheiro(dados[id]));
+  preencher('pedidos',dados.pedidosRecentes.map(p=>`<tr><td title="${escapar(p.id)}">#${escapar(p.id.slice(-8))}</td><td>${escapar(p.data.replace('T',' ').slice(0,16))}</td><td><span class="badge badge-secondary">${escapar(nomes[p.status]||p.status)}</span></td><td class="text-right">${dinheiro(p.total)}</td></tr>`),4);
+  if(graficoVendas)graficoVendas.destroy();if(graficoSituacoes)graficoSituacoes.destroy();if(graficoProdutos)graficoProdutos.destroy();
+  graficoVendas=new Chart(document.getElementById('vendas'),{type:'bar',data:{labels:dados.vendasPorPeriodo.map(p=>p.periodo),datasets:[{label:'Vendas',data:dados.vendasPorPeriodo.map(p=>p.vendas),backgroundColor:'#17a2b8',borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true}},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>dinheiro(c.parsed.y)}}}}});
+  const status=Object.entries(dados.situacoes);
+  graficoSituacoes=new Chart(document.getElementById('situacoes'),{type:'doughnut',data:{labels:status.map(s=>nomes[s[0]]||s[0]),datasets:[{data:status.map(s=>s[1]),backgroundColor:['#17a2b8','#ffc107','#28a745','#6f42c1','#fd7e14','#20c997','#dc3545','#6c757d']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
+  const produtos=dados.produtosMaisVendidos.slice(0,7);
+  document.getElementById('semProdutos').style.display=produtos.length?'none':'block';
+  graficoProdutos=new Chart(document.getElementById('graficoProdutos'),{type:'bar',data:{labels:produtos.map(p=>p.nome),datasets:[{label:'Unidades pedidas',data:produtos.map(p=>p.quantidade),backgroundColor:'#fd7e14',borderRadius:5}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,scales:{x:{beginAtZero:true,ticks:{precision:0}}},plugins:{legend:{display:false}}}});
+  document.getElementById('atualizado').textContent='Atualizado às '+new Date().toLocaleTimeString('pt-BR');
+ }catch(e){if(e.name==='AbortError')return;erro.textContent=e.message;erro.style.display='block';}
+}
+function aplicarPeriodo(){
+ const periodo=document.getElementById('periodo').value;
+ if(periodo==='personalizado')return;
+ const hoje=new Date();const inicio=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate());
+ if(periodo==='semana')inicio.setDate(inicio.getDate()-((inicio.getDay()+6)%7));
+ if(periodo==='mes')inicio.setDate(1);
+ const formatar=data=>`${data.getFullYear()}-${String(data.getMonth()+1).padStart(2,'0')}-${String(data.getDate()).padStart(2,'0')}`;
+ document.getElementById('inicio').value=formatar(inicio);
+ document.getElementById('fim').value=formatar(hoje);
+}
+document.getElementById('periodo').addEventListener('change',()=>{aplicarPeriodo();carregar();});
+['inicio','fim'].forEach(id=>document.getElementById(id).addEventListener('change',()=>{document.getElementById('periodo').value='personalizado';}));
+document.getElementById('filtros').addEventListener('submit',e=>{e.preventDefault();carregar();});
+document.getElementById('limpar').addEventListener('click',()=>{document.getElementById('filtros').reset();aplicarPeriodo();carregar();});
+aplicarPeriodo();carregar();setInterval(()=>{if(!document.hidden)carregar();},60000);
+</script></body></html>

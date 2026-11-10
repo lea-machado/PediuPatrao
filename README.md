@@ -27,6 +27,23 @@ A aplicação foi desenvolvida utilizando:
 - Listagem de funcionários.
 - Conexão do MongoDB alterada para variável de ambiente.
 - Testes unitários e de segurança.
+- Adição do Dashboard Administrativo utilizando AdminLTE, com indicadores de vendas, gráficos e consulta aos dados por meio da API REST.
+- Adição de filtros por período e situação dos pedidos, com visualização de vendas por dia, semana ou mês e dos produtos mais pedidos no período.
+
+## Dashboard Administrativo
+
+Foi desenvolvido um Dashboard Administrativo para auxiliar no acompanhamento das vendas e dos pedidos da lanchonete. O painel utiliza AdminLTE e Chart.js e consome os dados disponibilizados pelo endpoint `GET /api/dashboard`.
+
+O Dashboard apresenta:
+- Total de pedidos, faturamento estimado, ticket médio e quantidade de pedidos cancelados.
+- Gráfico de vendas agrupadas por dia, semana ou mês.
+- Gráfico da situação atual dos pedidos.
+- Gráfico dos produtos mais pedidos no período selecionado.
+- Filtros por data inicial, data final e situação dos pedidos.
+- Atualização automática dos dados a cada 60 segundos enquanto a página estiver visível.
+- Lista dos pedidos recentes no período consultado.
+
+O acesso é destinado aos perfis **ADMIN** e **GERENTE**, mediante as permissões configuradas no Spring Security. Após o login, o painel pode ser acessado pelo menu **Dashboard** ou pelo endereço `http://localhost:8080/admin`.
 
 ## Como executar
 É necessário que o usuário possua instalados:
@@ -93,9 +110,33 @@ mvn spring-boot:run
 > É necessário configurar as variáveis de ambiente toda vez antes de iniciar a aplicação.
 
 ## Testes automatizados
-Foram realizados 8 testes unitários e 3 testes de segurança.
+O projeto possui 30 testes automatizados, distribuídos em quatro classes, abrangendo testes unitários, testes da camada web e verificações de segurança e autorização.
 
 Para executá-los, em um terminal aberto na pasta raiz do projeto, rode:
 ```bash
 mvn clean test
 ```
+
+Também foram adicionadas classes de testes automatizados para o Dashboard Administrativo, utilizando JUnit 5, Mockito e MockMvc, contemplando cálculos dos indicadores, agrupamento de vendas, filtros, dados da API e controle de acesso.
+
+Para executar apenas os testes do Dashboard:
+
+```bash
+mvn -Dtest=DashboardServiceTest,DashboardControllerTest test
+```
+
+### Evidência da execução dos testes
+
+![Evidência da execução dos testes automatizados](docs/testes-executados.png)
+
+## Requisitos do Dashboard
+
+A documentação contém os requisitos funcionais e não funcionais do Dashboard Administrativo, incluindo descrição, regras de negócio e critérios de aceite.
+
+**[Clique aqui para acessar o arquivo de requisitos](docs/requisitos.md)**
+
+## Documentação dos endpoints
+
+A documentação da API apresenta o endpoint desenvolvido, seus parâmetros, exemplos de requisição e resposta, possíveis erros e regras de negócio.
+
+**[Clique aqui para acessar a documentação dos endpoints](docs/endpoints_api.md)**
