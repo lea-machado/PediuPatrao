@@ -41,17 +41,23 @@
             </select>
             <small id="pedidoMensagemCliente" class="text-muted"></small>
           </div>
-          <div class="col-md-5"><select id="pedidoProdutoId" class="form-select" required>
+          <div class="col-md-5"><select id="pedidoProdutoId" class="form-select">
               <option value="">Selecione o produto</option>
               <option th:each="produto : ${produtosPedido}" th:if="${produto.ativo != false}" th:value="${produto.id}"
                 th:text="${produto.nome + ' - R$ ' + produto.preco}"></option>
             </select></div>
-          <div class="col-md-2"><input id="pedidoQuantidade" type="number" min="1" value="1" class="form-control"
-              required></div>
-          <div class="col-md-2"><button type="submit" class="btn btn-primary">Registrar</button></div>
+          <div class="col-md-2"><input id="pedidoQuantidade" type="number" min="1" value="1" class="form-control"></div>
+          <div class="col-md-2"><button type="button" id="adicionarProdutoPedido" class="btn btn-outline-primary w-100">Adicionar</button></div>
+          <div class="col-12 mt-3">
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered align-middle">
+                <thead><tr><th>Produto</th><th>Quantidade</th><th>Ação</th></tr></thead>
+                <tbody id="itensNovoPedido"><tr><td colspan="3" class="text-muted text-center">Adicione produtos ao pedido.</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="col-12 d-flex justify-content-end"><button type="submit" id="registrarNovoPedido" class="btn btn-primary">Registrar pedido</button></div>
         </form>
-        <small class="text-muted">Preço e total são calculados pelo servidor. Um produto por vez neste formulário; a API
-          aceita vários itens.</small>
       </div>
     </div>
     <!-- Tabela -->
@@ -227,10 +233,69 @@
       }
 
       const formNovoPedido = document.getElementById('formNovoPedido');
+      const itensSelecionadosPedido = [];
+      const selecaoProdutoPedido = document.getElementById('pedidoProdutoId');
+      const quantidadeProdutoPedido = document.getElementById('pedidoQuantidade');
+      const tabelaItensPedido = document.getElementById('itensNovoPedido');
+
+      function atualizarItensPedido() {
+        if (!tabelaItensPedido) return;
+        tabelaItensPedido.replaceChildren();
+        if (!itensSelecionadosPedido.length) {
+          const linha = tabelaItensPedido.insertRow();
+          const celula = linha.insertCell();
+          celula.colSpan = 3;
+          celula.className = 'text-muted text-center';
+          celula.textContent = 'Adicione produtos ao pedido.';
+          return;
+        }
+        itensSelecionadosPedido.forEach((item, indice) => {
+          const linha = tabelaItensPedido.insertRow();
+          linha.insertCell().textContent = item.nome;
+          linha.insertCell().textContent = item.quantidade;
+          const botao = document.createElement('button');
+          botao.type = 'button';
+          botao.className = 'btn btn-sm btn-outline-danger';
+          botao.textContent = 'Remover';
+          botao.addEventListener('click', () => {
+            itensSelecionadosPedido.splice(indice, 1);
+            atualizarItensPedido();
+          });
+          linha.insertCell().appendChild(botao);
+        });
+      }
+
+      const botaoAdicionarProduto = document.getElementById('adicionarProdutoPedido');
+      if (botaoAdicionarProduto) botaoAdicionarProduto.addEventListener('click', () => {
+        const produtoId = selecaoProdutoPedido.value;
+        const quantidade = Number(quantidadeProdutoPedido.value);
+        if (!produtoId || !Number.isInteger(quantidade) || quantidade < 1) {
+          alert('Selecione um produto e informe uma quantidade válida.');
+          return;
+        }
+        const existente = itensSelecionadosPedido.find(item => item.produtoId === produtoId);
+        if (existente) {
+          existente.quantidade += quantidade;
+        } else {
+          itensSelecionadosPedido.push({
+            produtoId,
+            nome: selecaoProdutoPedido.selectedOptions[0].textContent,
+            quantidade
+          });
+        }
+        atualizarItensPedido();
+        selecaoProdutoPedido.value = '';
+        quantidadeProdutoPedido.value = 1;
+      });
+
       if (formNovoPedido) formNovoPedido.addEventListener('submit', async e => {
         e.preventDefault();
         if (!selecaoClientePedido.value) {
           alert('Selecione um cliente cadastrado antes de registrar o pedido.');
+          return;
+        }
+        if (!itensSelecionadosPedido.length) {
+          alert('Adicione pelo menos um produto ao pedido.');
           return;
         }
         try {
@@ -238,7 +303,7 @@
             method: 'POST', headers: {'Content-Type': 'application/json', [csrfPedidoHeader]: csrfPedidoToken},
             body: JSON.stringify({
               clienteId: document.getElementById('pedidoClienteId').value,
-              itens: [{produtoId: document.getElementById('pedidoProdutoId').value, quantidade: Number(document.getElementById('pedidoQuantidade').value)}]
+              itens: itensSelecionadosPedido.map(item => ({produtoId: item.produtoId, quantidade: item.quantidade}))
             })
           });
           if (!r.ok) throw new Error((await r.json().catch(() => ({}))).erro || 'Falha ao registrar pedido.');
@@ -352,7 +417,5 @@
       });
     </script>
   </div>
-
 </body>
-
 </html>

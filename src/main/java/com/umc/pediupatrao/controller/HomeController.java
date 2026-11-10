@@ -297,6 +297,6 @@ public class HomeController {
 
     @GetMapping("/admin")
     public String admin() {
-        return "admin";
+        return "dashboard";
     }
 }

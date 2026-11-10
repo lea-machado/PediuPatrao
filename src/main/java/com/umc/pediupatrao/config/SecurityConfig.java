@@ -83,7 +83,12 @@ public class SecurityConfig {
                         .requestMatchers("/clientes/**", "/api/clientes/**").denyAll()
                         .requestMatchers("/produtos/**", "/produtos", "/api/produtos/**", "/api/produtos")
                         .hasRole("gerente")
-                        .requestMatchers("/configuracoes", "/admin").hasRole("admin")
+                        .requestMatchers("/configuracoes").hasRole("admin")
+                        .requestMatchers(HttpMethod.GET, "/admin")
+                        .hasAnyRole("admin", "gerente")
+                        .requestMatchers(HttpMethod.GET, "/api/dashboard", "/api/dashboard/**")
+                        .hasAnyRole("admin", "gerente")
+                        .requestMatchers("/api/dashboard/**").denyAll()
                         .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginPage("/login")
