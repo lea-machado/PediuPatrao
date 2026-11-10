@@ -135,17 +135,6 @@ GET /api/dashboard?agrupamento=ano
 }
 ```
 
-## 4. Arquitetura e integração
-
-```mermaid
-flowchart TD
-    A["Dashboard AdminLTE e Chart.js"] -->|"GET /api/dashboard"| B["DashboardController"]
-    B --> C["DashboardService"]
-    C --> D["PedidoRepository"]
-    D --> E[("MongoDB: pedidos")]
-    B -->|"JSON"| A
-```
-
 **Responsabilidades:**
 
 - `DashboardController`: recebe parâmetros, chama o serviço e devolve JSON.
